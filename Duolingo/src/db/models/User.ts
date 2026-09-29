@@ -14,14 +14,14 @@ export interface UserAttributes {
 export type UserCreationAttributes = Optional<UserAttributes, 'id' | 'totalXp'>;
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
-  public id!: string;
-  public username!: string;
-  public email!: string;
-  public password!: string;
-  public totalXp!: number;
+  declare id: string;
+  declare username: string;
+  declare email: string;
+  declare password: string;
+  declare totalXp: number;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 User.init(

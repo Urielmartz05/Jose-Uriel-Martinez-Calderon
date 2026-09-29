@@ -18,15 +18,15 @@ export class Question
   extends Model<QuestionAttributes, QuestionCreationAttributes>
   implements QuestionAttributes
 {
-  public id!: string;
-  public categoryId!: 'addition' | 'subtraction' | 'multiplication' | 'division' | 'word_problems';
-  public prompt!: string;
-  public options!: string[];
-  public correctIndex!: number;
-  public explanation!: string;
+  declare id: string;
+  declare categoryId: 'addition' | 'subtraction' | 'multiplication' | 'division' | 'word_problems';
+  declare prompt: string;
+  declare options: string[];
+  declare correctIndex: number;
+  declare explanation: string;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 Question.init(

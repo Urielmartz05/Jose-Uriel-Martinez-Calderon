@@ -9,21 +9,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') as CategoryId | null;
 
-    // Check if questions are seeded in DB; if not, seed them
-    const count = await QuestionModel.count();
-    if (count === 0) {
-      const allQuestions: Question[] = Object.values(questionsData).flat();
-      for (const q of allQuestions) {
-        await QuestionModel.create({
-          id: q.id,
-          categoryId: q.categoryId,
-          prompt: q.prompt,
-          options: q.options,
-          correctIndex: q.correctIndex,
-          explanation: q.explanation,
-        });
-      }
-    }
+    // initDB ensures questions are populated
 
     if (category) {
       if (!questionsData[category]) {

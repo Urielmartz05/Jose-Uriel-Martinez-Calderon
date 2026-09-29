@@ -21,15 +21,15 @@ export class UserProgress
   extends Model<UserProgressAttributes, UserProgressCreationAttributes>
   implements UserProgressAttributes
 {
-  public id!: string;
-  public userId!: string;
-  public categoryId!: 'addition' | 'subtraction' | 'multiplication' | 'division' | 'word_problems';
-  public completed!: boolean;
-  public highscore!: number;
-  public bestAccuracy!: number;
+  declare id: string;
+  declare userId: string;
+  declare categoryId: 'addition' | 'subtraction' | 'multiplication' | 'division' | 'word_problems';
+  declare completed: boolean;
+  declare highscore: number;
+  declare bestAccuracy: number;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 UserProgress.init(

@@ -24,18 +24,18 @@ export class GameSession
   extends Model<GameSessionAttributes, GameSessionCreationAttributes>
   implements GameSessionAttributes
 {
-  public id!: string;
-  public userId!: string;
-  public categoryId!: 'addition' | 'subtraction' | 'multiplication' | 'division' | 'word_problems';
-  public score!: number;
-  public correctCount!: number;
-  public incorrectCount!: number;
-  public percentage!: number;
-  public heartsLeft!: number;
-  public finishedAt!: Date;
+  declare id: string;
+  declare userId: string;
+  declare categoryId: 'addition' | 'subtraction' | 'multiplication' | 'division' | 'word_problems';
+  declare score: number;
+  declare correctCount: number;
+  declare incorrectCount: number;
+  declare percentage: number;
+  declare heartsLeft: number;
+  declare finishedAt: Date;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 GameSession.init(
