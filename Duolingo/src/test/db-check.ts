@@ -15,7 +15,10 @@ async function verifyDatabase() {
 
   // 2. Comprobar dialecto y configuración
   const dialect = sequelize.getDialect();
+  const dbConfig = (sequelize.config as any);
+  const host = dbConfig?.host || (process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL.replace('postgresql://', 'http://')).host : 'local (sqlite)');
   console.log(`✓ Dialecto Sequelize en uso: ${dialect}`);
+  console.log(`✓ Destino de conexión: ${host}`);
 
   // 3. Comprobar existencia de tablas
   const tables = await sequelize.getQueryInterface().showAllTables();
