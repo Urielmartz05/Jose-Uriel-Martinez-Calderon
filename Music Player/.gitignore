@@ -52,5 +52,9 @@ Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
+
+# Database
+*.sqlite
+*.sqlite-journal
+database.sqlite*
