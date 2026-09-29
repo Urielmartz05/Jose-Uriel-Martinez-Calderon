@@ -1,7 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['sequelize', 'sqlite3', 'bcryptjs'],
+    serverComponentsExternalPackages: [
+      'sequelize',
+      'sqlite3',
+      'pg',
+      'pg-hstore',
+      'bcryptjs',
+    ],
   },
 };
 
