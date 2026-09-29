@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-page: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --text-main: #4B4B4B;
+  --text-muted: #AFAFAF;
+  --border-subtle: #E5E5E5;
+
+  /* Colores Duolingo Core */
+  --duo-green: #58CC02;
+  --duo-green-border: #46A302;
+  --duo-green-bg: #D7FFB8;
+
+  --duo-red: #FF4B4B;
+  --duo-red-border: #EA2B2B;
+  --duo-red-bg: #FFDFE0;
+
+  --duo-yellow: #FFC800;
+  --duo-yellow-border: #E5A500;
+
+  --duo-blue: #1CB0F6;
+  --duo-blue-border: #1899D6;
+  --duo-blue-bg: #DDF4FF;
+
+  --duo-gray-disabled: #E5E5E5;
+  --duo-gray-border: #CECECE;
+}
+
+body {
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 3D Push-down Button Effects */
+.btn-3d {
+  transition: all 0.1s ease;
+  position: relative;
+}
+
+.btn-3d:active:not(:disabled) {
+  transform: translateY(3px);
+}
+
+.btn-3d-green {
+  background-color: var(--duo-green);
+  border-bottom: 4px solid var(--duo-green-border);
+  color: white;
+}
+.btn-3d-green:active:not(:disabled) {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
+}
+
+.btn-3d-blue {
+  background-color: var(--duo-blue);
+  border-bottom: 4px solid var(--duo-blue-border);
+  color: white;
+}
+.btn-3d-blue:active:not(:disabled) {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
+}
+
+.btn-3d-red {
+  background-color: var(--duo-red);
+  border-bottom: 4px solid var(--duo-red-border);
+  color: white;
+}
+.btn-3d-red:active:not(:disabled) {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
+}
+
+.btn-3d-white {
+  background-color: #FFFFFF;
+  border: 2px solid #E5E5E5;
+  border-bottom: 4px solid #CECECE;
+  color: #4B4B4B;
+}
+.btn-3d-white:active:not(:disabled) {
+  border-bottom-width: 2px;
+  transform: translateY(2px);
+}
+
+.btn-3d-disabled {
+  background-color: var(--duo-gray-disabled);
+  border-bottom: 4px solid var(--duo-gray-border);
+  color: #AFAFAF;
+  cursor: not-allowed;
+}
+
+/* Heart animations */
+@keyframes heart-shake {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.3) rotate(-10deg); }
+  40% { transform: scale(1.3) rotate(10deg); }
+  60% { transform: scale(1.2) rotate(-5deg); }
+  80% { transform: scale(1.1) rotate(5deg); }
+  100% { transform: scale(1); }
+}
+
+.animate-heart-shake {
+  animation: heart-shake 0.5s ease-in-out;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out forwards;
+}
+

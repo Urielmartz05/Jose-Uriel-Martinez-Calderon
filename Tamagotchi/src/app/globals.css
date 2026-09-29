@@ -1,0 +1,1797 @@
+/* ==========================================================================
+   TAMAGOTCHI OS - RETRO LCD VIRTUAL PET DESIGN SYSTEM
+   Implementation strictly conforming to design.md tokens & specifications
+   ========================================================================== */
+
+:root {
+  /* ------------------------------------------------------------------------
+     2.1 DESIGN TOKENS (design.md Section 2.1)
+     ------------------------------------------------------------------------ */
+  /* Fondo general / Chasis */
+  --color-shell-bg: #E2E8F0;          /* Gris slate suave para marco general */
+  --color-shell-primary: #F59E0B;     /* Amarillo/ámbar de juguete retro */
+  --color-shell-accent: #D97706;
+
+  /* Pantalla LCD / Matriz */
+  --color-screen-bg: #A3B18A;         /* Verde olivo claro tipo pantalla Game Boy/Tamagotchi */
+  --color-screen-pixel: #344E41;      /* Verde oscuro profundo para píxeles y texto */
+  --color-screen-border: #588157;     /* Borde interior del bisel */
+
+  /* Semántica de Métricas (Barras de Estado) */
+  --color-stat-hunger: #EF4444;       /* Rojo alerta */
+  --color-stat-fun: #3B82F6;          /* Azul energía */
+  --color-stat-hygiene: #10B981;      /* Verde menta */
+  --color-stat-happiness: #F59E0B;    /* Dorado/Ámbar */
+
+  /* Estados Críticos */
+  --color-ghost-primary: #94A3B8;     /* Gris pálido etéreo */
+  --color-alert-urgent: #DC2626;      /* Rojo parpadeo de alerta */
+
+  /* Ghost LCD Mode overrides */
+  --color-ghost-screen-bg: #B0BEC5;
+  --color-ghost-screen-pixel: #263238;
+  --color-ghost-screen-border: #78909C;
+
+  /* Estructura ambiental */
+  --bg-desktop: #0F172A;
+  --bg-card: rgba(30, 41, 59, 0.78);
+  --bg-card-border: rgba(148, 163, 184, 0.18);
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+
+  /* 2.2 Tipografía */
+  --font-display: 'Press Start 2P', monospace;
+  --font-pixel: 'Silkscreen', 'Press Start 2P', monospace;
+  --font-dialogue: 'Chakra Petch', monospace;
+  --font-body: 'Outfit', sans-serif;
+}
+
+/* Base resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100vh;
+  background-color: var(--bg-desktop);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   AMBIENT RETRO WORKSPACE BACKDROP
+   ========================================================================== */
+
+.tamagotchi-app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 20%, #1e293b 0%, #090d16 100%);
+}
+
+.ambient-background-glow {
+  position: fixed;
+  top: -15%;
+  left: 25%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(59, 130, 246, 0.05) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(90px);
+}
+
+.ambient-grid-overlay {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* App Header */
+.app-header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 2px solid rgba(245, 158, 11, 0.2);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.brand-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+  animation: egg-float 3s ease-in-out infinite;
+}
+
+@keyframes egg-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 1px;
+  color: var(--color-shell-primary);
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.brand-subtitle {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-dialogue);
+  letter-spacing: 0.5px;
+}
+
+.btn-header-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-family: var(--font-dialogue);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #000;
+  transition: all 0.15s ease;
+}
+
+.btn-header-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: rgba(245, 158, 11, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-header-secondary:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #000;
+}
+
+/* ==========================================================================
+   MAIN 3-COLUMN RESPONSIVE LAYOUT
+   ========================================================================== */
+
+.app-main-layout {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 310px minmax(360px, 480px) 330px;
+  gap: 2rem;
+  padding: 1.75rem 2rem 2.5rem 2rem;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+  align-items: start;
+  justify-content: center;
+}
+
+@media (max-width: 1180px) {
+  .app-main-layout {
+    grid-template-columns: 1fr;
+    max-width: 520px;
+    gap: 1.75rem;
+    padding: 1.25rem 1rem;
+  }
+
+  .sidebar-left {
+    order: 2;
+  }
+  .layout-device-center {
+    order: 1;
+  }
+  .sidebar-right {
+    order: 3;
+  }
+}
+
+.layout-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.layout-device-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* ==========================================================================
+   3. RETRO HARDWARE CHASSIS (Egg-shaped / Retro Shell - Section 2.3 & 3)
+   ========================================================================== */
+
+.tamagotchi-egg-chassis {
+  width: 100%;
+  max-width: 460px;
+  /* Retro Egg / Handheld console curvature (design.md Section 2.3) */
+  border-radius: 90px 90px 115px 115px;
+  background: linear-gradient(165deg, #FBBF24 0%, var(--color-shell-primary) 35%, var(--color-shell-accent) 85%, #B45309 100%);
+  border: 4px solid #78350F;
+  box-shadow:
+    0 22px 50px -10px rgba(0, 0, 0, 0.8),
+    0 0 35px rgba(245, 158, 11, 0.25),
+    inset 0 4px 8px rgba(255, 255, 255, 0.5),
+    inset 0 -6px 12px rgba(120, 53, 15, 0.6);
+  padding: 1.5rem 1.6rem 2rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  user-select: none;
+}
+
+.is-ghost-mode .tamagotchi-egg-chassis {
+  background: linear-gradient(165deg, #94A3B8 0%, #64748B 35%, #475569 85%, #334155 100%);
+  border-color: #1E293B;
+  box-shadow:
+    0 22px 50px -10px rgba(0, 0, 0, 0.8),
+    0 0 35px rgba(148, 163, 184, 0.2),
+    inset 0 4px 8px rgba(255, 255, 255, 0.4),
+    inset 0 -6px 12px rgba(15, 23, 42, 0.6);
+  animation: ghost-shake-subtle 4s ease-in-out infinite;
+}
+
+@keyframes ghost-shake-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Keychain Loop */
+.chassis-keychain-loop {
+  position: absolute;
+  top: -18px;
+  width: 44px;
+  height: 26px;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(180deg, #D97706 0%, #B45309 100%);
+  border: 3px solid #78350F;
+  border-bottom: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.chassis-keychain-hole {
+  width: 16px;
+  height: 14px;
+  border-radius: 50%;
+  background: #090D16;
+  border: 2px solid #5C2607;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* Hardware Screws & Branding Top */
+.chassis-hardware-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  margin-bottom: 0.85rem;
+  padding: 0 0.5rem;
+}
+
+.chassis-screw {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #CBD5E1 0%, #64748B 80%, #334155 100%);
+  border: 1px solid #1E293B;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6), 0 1px 2px rgba(0,0,0,0.5);
+  position: relative;
+}
+
+.chassis-screw::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 1.5px;
+  background: #1E293B;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.chassis-brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  color: #78350F;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.is-ghost-mode .brand-name {
+  color: #0F172A;
+}
+
+.brand-stars {
+  font-size: 0.55rem;
+  color: #92400E;
+}
+
+/* --------------------------------------------------------------------------
+   SCREEN BEZEL (design.md Section 2.3)
+   border: 4px solid var(--color-screen-pixel), radio 8px, sombra interior inset 2px 2px 6px rgba(0,0,0,0.2)
+   -------------------------------------------------------------------------- */
+.chassis-screen-bezel {
+  width: 100%;
+  background: var(--color-screen-border);
+  border: 4px solid var(--color-screen-pixel);
+  border-radius: 12px;
+  padding: 0.75rem;
+  box-shadow:
+    inset 2px 2px 6px rgba(0, 0, 0, 0.35),
+    0 4px 10px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.bezel-ghost-mode {
+  background: var(--color-ghost-screen-border);
+  border-color: var(--color-ghost-screen-pixel);
+}
+
+.bezel-glare-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 35%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 5;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Speaker Grill */
+.chassis-speaker-grill {
+  display: flex;
+  gap: 6px;
+  margin-top: 0.85rem;
+}
+
+.grill-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #78350F;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.is-ghost-mode .grill-dot {
+  background: #1E293B;
+}
+
+/* Chassis Bottom Label */
+.chassis-hardware-bottom {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.15rem;
+  padding: 0 0.5rem;
+}
+
+.chassis-model-label {
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  color: #78350F;
+  opacity: 0.8;
+}
+
+.is-ghost-mode .chassis-model-label {
+  color: #1E293B;
+}
+
+/* ==========================================================================
+   5.2 DIGITAL CLOCK COMPONENT & CABECERA (design.md Section 5.2)
+   ========================================================================== */
+
+.digital-clock-lcd {
+  background: var(--color-screen-bg);
+  border: 2px solid var(--color-screen-pixel);
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease;
+}
+
+.bezel-ghost-mode .digital-clock-lcd {
+  background: var(--color-ghost-screen-bg);
+  border-color: var(--color-ghost-screen-pixel);
+}
+
+/* 6. Tick pulsing micro-interaction (design.md Section 6) */
+.digital-clock-lcd.tick-pulse {
+  animation: tick-pulse-anim 0.3s ease-out;
+}
+
+@keyframes tick-pulse-anim {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+  100% { transform: scale(1); }
+}
+
+.clock-lcd-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clock-time-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.lcd-time-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--color-screen-pixel);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.lcd-time-sub {
+  font-family: var(--font-dialogue);
+  font-size: 0.65rem;
+  color: var(--color-screen-pixel);
+  opacity: 0.75;
+}
+
+.clock-status-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* LED Alert light */
+.hardware-led-indicator {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.led-online {
+  background: #10B981;
+  box-shadow: 0 0 6px #10B981;
+}
+
+.led-standby {
+  background: #F59E0B;
+}
+
+.led-alert-blinking {
+  background: var(--color-alert-urgent);
+  box-shadow: 0 0 8px #DC2626;
+  animation: led-blink 0.6s infinite alternate;
+}
+
+@keyframes led-blink {
+  from { opacity: 1; transform: scale(1.1); }
+  to { opacity: 0.2; transform: scale(0.9); }
+}
+
+.lcd-status-badge {
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.status-alive {
+  color: var(--color-screen-pixel);
+}
+
+.status-alert {
+  color: var(--color-alert-urgent);
+  animation: text-flash 0.8s infinite alternate;
+}
+
+.status-ghost {
+  color: #475569;
+}
+
+.status-completed {
+  color: #1E3A8A;
+}
+
+@keyframes text-flash {
+  from { opacity: 1; }
+  to { opacity: 0.35; }
+}
+
+.clock-lcd-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 1px dashed rgba(52, 78, 65, 0.3);
+  padding-top: 0.25rem;
+}
+
+.clock-progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.lcd-progress-text {
+  font-family: var(--font-dialogue);
+  font-size: 0.65rem;
+  color: var(--color-screen-pixel);
+  font-weight: 600;
+}
+
+.lcd-tiny-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(52, 78, 65, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.lcd-tiny-fill {
+  height: 100%;
+  background: var(--color-screen-pixel);
+  transition: width 0.3s ease;
+}
+
+.lcd-pause-control {
+  font-family: var(--font-pixel);
+  font-size: 0.58rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--color-screen-pixel);
+  background: transparent;
+  color: var(--color-screen-pixel);
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 1px 0 var(--color-screen-pixel);
+  font-weight: 700;
+}
+
+.lcd-pause-control:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   4. RETRO LCD PET DISPLAY VIEWPORT (design.md Section 4 & 5.5)
+   ========================================================================== */
+
+.pet-display-component {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lcd-screen-viewport {
+  position: relative;
+  background: var(--color-screen-bg);
+  border: 3px solid var(--color-screen-pixel);
+  border-radius: 8px;
+  padding: 0.75rem 0.65rem 0.5rem 0.65rem;
+  box-shadow:
+    inset 2px 2px 6px rgba(0, 0, 0, 0.25),
+    0 0 10px rgba(163, 177, 138, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 250px;
+  overflow: hidden;
+  transition: background-color 0.4s ease, border-color 0.4s ease;
+}
+
+/* Ghost mood color mutation to cool gray LCD */
+.mood-ghost_starvation .lcd-screen-viewport,
+.mood-ghost_overfeeding .lcd-screen-viewport {
+  background: var(--color-ghost-screen-bg);
+  border-color: var(--color-ghost-screen-pixel);
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.35);
+  animation: death-flash 0.8s ease-out;
+}
+
+@keyframes death-flash {
+  0% { background: #FFFFFF; }
+  100% { background: var(--color-ghost-screen-bg); }
+}
+
+/* Rapid red outline pulse on hunger alert (design.md Section 4) */
+.screen-urgent-red-alert {
+  border-color: var(--color-alert-urgent) !important;
+  animation: screen-red-pulse 0.7s infinite alternate;
+}
+
+@keyframes screen-red-pulse {
+  from {
+    box-shadow: 0 0 4px rgba(220, 38, 38, 0.4), inset 0 0 4px rgba(220, 38, 38, 0.4);
+  }
+  to {
+    box-shadow: 0 0 14px rgba(220, 38, 38, 0.8), inset 0 0 10px rgba(220, 38, 38, 0.8);
+  }
+}
+
+/* Matrix & Scanlines */
+.lcd-matrix-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(52, 78, 65, 0.12) 1px, transparent 1px);
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lcd-scanlines-filter {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.05) 2px,
+    rgba(0, 0, 0, 0.05) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Screen Top Badges */
+.lcd-top-badges {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 22px;
+}
+
+.lcd-ascii-mood {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--color-screen-pixel);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.lcd-alert-tag {
+  font-family: var(--font-pixel);
+  font-size: 0.58rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.lcd-alert-hunger {
+  background: var(--color-alert-urgent);
+  color: #FFF;
+}
+
+.lcd-alert-event {
+  background: #D97706;
+  color: #FFF;
+}
+
+.lcd-alert-ghost {
+  background: #475569;
+  color: #F1F5F9;
+}
+
+.animate-blink {
+  animation: alert-blink 0.8s infinite alternate;
+}
+
+@keyframes alert-blink {
+  from { opacity: 1; }
+  to { opacity: 0.2; }
+}
+
+.animate-blink-fast {
+  animation: alert-blink 0.4s infinite alternate;
+}
+
+/* Avatar Stage Area */
+.pet-avatar-stage-area {
+  position: relative;
+  z-index: 3;
+  margin: 0.4rem 0 0.6rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 125px;
+  width: 100%;
+}
+
+.pixel-pet-svg {
+  color: var(--color-screen-pixel);
+  filter: drop-shadow(0 2px 2px rgba(52, 78, 65, 0.4));
+}
+
+.bezel-ghost-mode .pixel-pet-svg {
+  color: var(--color-ghost-screen-pixel);
+}
+
+.lcd-ground-shadow {
+  width: 65px;
+  height: 6px;
+  background: rgba(52, 78, 65, 0.35);
+  border-radius: 50%;
+  margin-top: -3px;
+}
+
+/* Floating Accessory (Meat, Poop, Trophy) */
+.sprite-floating-accessory {
+  position: absolute;
+  top: 10px;
+  right: 18%;
+  color: var(--color-screen-pixel);
+}
+
+.accessory-meat {
+  top: 4px;
+  right: 14%;
+  color: var(--color-screen-pixel);
+}
+
+.accessory-poop {
+  top: 45px;
+  right: 10%;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Orbiting Flies for dirty state (design.md Section 4) */
+.lcd-fly-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--color-screen-pixel);
+  border-radius: 50%;
+}
+
+.fly-1 {
+  animation: flies-orbit-1 1.2s linear infinite;
+}
+
+.fly-2 {
+  animation: flies-orbit-2 1.5s linear infinite;
+}
+
+@keyframes flies-orbit-1 {
+  0% { transform: rotate(0deg) translateX(16px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(16px) rotate(-360deg); }
+}
+
+@keyframes flies-orbit-2 {
+  0% { transform: rotate(180deg) translateX(14px) rotate(-180deg); }
+  100% { transform: rotate(540deg) translateX(14px) rotate(-540deg); }
+}
+
+.accessory-trophy {
+  top: 2px;
+  right: 12%;
+  color: var(--color-screen-pixel);
+}
+
+/* ==========================================================================
+   AVATAR SPRITE ANIMATIONS (design.md Section 4 & 6)
+   ========================================================================== */
+
+/* 1. Normal Bounce every 2s */
+.animate-lcd-bounce {
+  animation: lcd-bounce 2s ease-in-out infinite;
+}
+
+@keyframes lcd-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* 2. Hungry Tremble */
+.animate-lcd-hungry {
+  animation: lcd-hungry-shake 0.8s infinite;
+}
+
+@keyframes lcd-hungry-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px) rotate(-1deg); }
+  75% { transform: translateX(2px) rotate(1deg); }
+}
+
+/* 3. Bored Lateral Slow Drift */
+.animate-lcd-bored {
+  animation: lcd-bored-drift 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes lcd-bored-drift {
+  from { transform: translateX(-10px); }
+  to { transform: translateX(10px); }
+}
+
+/* 4. Dirty Shiver */
+.animate-lcd-dirty {
+  animation: lcd-dirty-shiver 0.35s infinite;
+}
+
+@keyframes lcd-dirty-shiver {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-1px, 1px); }
+}
+
+/* 5. Ghost (Inanición) Smooth Float with 70% opacity (design.md Section 4) */
+.animate-ghost-float-smooth {
+  opacity: 0.7;
+  animation: ghost-float-smooth 3s ease-in-out infinite;
+}
+
+@keyframes ghost-float-smooth {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* 6. Ghost (Sobrealimentado) Increased Scale & Erratic float */
+.animate-ghost-float-erratic {
+  transform: scale(1.15);
+  animation: ghost-erratic-dance 2.2s infinite;
+}
+
+@keyframes ghost-erratic-dance {
+  0%, 100% { transform: scale(1.15) translate(0, 0) rotate(0deg); }
+  20% { transform: scale(1.18) translate(-4px, -8px) rotate(-4deg); }
+  45% { transform: scale(1.12) translate(5px, -12px) rotate(5deg); }
+  75% { transform: scale(1.17) translate(-3px, -4px) rotate(-2deg); }
+}
+
+/* 7. Victory Celebration Sparkle */
+.animate-celebration-sparkle {
+  animation: victory-jump 1s ease-in-out infinite alternate;
+}
+
+@keyframes victory-jump {
+  from { transform: translateY(0) scale(1); }
+  to { transform: translateY(-12px) scale(1.05); }
+}
+
+/* 800ms Action Reaction pop (design.md Section 6) */
+.avatar-reaction-effect {
+  position: absolute;
+  top: -15px;
+  background: var(--color-screen-pixel);
+  color: var(--color-screen-bg);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-pixel);
+  font-size: 0.65rem;
+  font-weight: 700;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.animate-pop-scale {
+  animation: pop-action-reaction 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes pop-action-reaction {
+  0% { transform: scale(0.6) translateY(10px); opacity: 0; }
+  30% { transform: scale(1.1) translateY(-5px); opacity: 1; }
+  80% { transform: scale(1) translateY(0); opacity: 1; }
+  100% { transform: scale(0.9) translateY(-10px); opacity: 0; }
+}
+
+/* --------------------------------------------------------------------------
+   5.5 DYNAMIC DIALOGUE SUBTITLE BOX (design.md Section 5.5)
+   Caja de texto tipo subtítulo en el marco inferior de la pantalla LCD.
+   -------------------------------------------------------------------------- */
+.lcd-dialogue-console {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  background: rgba(52, 78, 65, 0.15);
+  border: 2px dashed var(--color-screen-pixel);
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  margin-top: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.bezel-ghost-mode .lcd-dialogue-console {
+  background: rgba(38, 50, 56, 0.15);
+  border-color: var(--color-ghost-screen-pixel);
+}
+
+.dialogue-header-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pet-name-tag {
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--color-screen-pixel);
+  letter-spacing: 0.5px;
+}
+
+.pet-mood-tag {
+  font-family: var(--font-pixel);
+  font-size: 0.58rem;
+  color: var(--color-screen-pixel);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.dialogue-text-msg {
+  font-family: var(--font-dialogue);
+  font-size: 0.72rem;
+  color: var(--color-screen-pixel);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+   5.3 STATS PANEL (10 Segmented LCD Blocks - design.md Section 5.3)
+   Hambre:   [████████░░] 80%
+   Diversión:[██████░░░░] 60%
+   Higiene:  [█████████░] 90%
+   Felicidad:[███████░░░] 70%
+   -------------------------------------------------------------------------- */
+.stats-panel-container {
+  background: var(--color-screen-bg);
+  border: 2px solid var(--color-screen-pixel);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.bezel-ghost-mode .stats-panel-container {
+  background: var(--color-ghost-screen-bg);
+  border-color: var(--color-ghost-screen-pixel);
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed rgba(52, 78, 65, 0.3);
+  padding-bottom: 0.25rem;
+}
+
+.stats-header-title {
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  color: var(--color-screen-pixel);
+  font-weight: 700;
+  letter-spacing: 0.75px;
+}
+
+.stats-consecutive-tag {
+  font-family: var(--font-dialogue);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--color-screen-pixel);
+  background: rgba(52, 78, 65, 0.12);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  border: 1px solid rgba(52, 78, 65, 0.25);
+}
+
+.stats-consecutive-tag.tag-warning {
+  background: #FEF3C7;
+  color: #B45309;
+  border-color: #F59E0B;
+  animation: alert-blink 0.8s infinite alternate;
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: 85px 1fr 34px;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stat-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-icon {
+  font-size: 0.75rem;
+}
+
+.stat-name {
+  font-family: var(--font-dialogue);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-screen-pixel);
+}
+
+.stat-track-wrap {
+  display: flex;
+  align-items: center;
+}
+
+/* 10 LCD Block Segments (design.md Section 5.3) */
+.lcd-blocks-row {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2.5px;
+  width: 100%;
+}
+
+.lcd-block-segment {
+  height: 9px;
+  border-radius: 1px;
+  transition: background-color 0.2s ease;
+}
+
+.lcd-block-segment.is-empty {
+  background: rgba(52, 78, 65, 0.15);
+  border: 1px solid rgba(52, 78, 65, 0.25);
+}
+
+.lcd-block-segment.is-filled.color-good {
+  background: var(--color-stat-hygiene);
+  box-shadow: 0 0 2px rgba(16, 185, 129, 0.5);
+}
+
+.lcd-block-segment.is-filled.color-warning {
+  background: var(--color-stat-happiness);
+  box-shadow: 0 0 2px rgba(245, 158, 11, 0.5);
+}
+
+.lcd-block-segment.is-filled.color-danger {
+  background: var(--color-stat-hunger);
+  box-shadow: 0 0 2px rgba(239, 68, 68, 0.5);
+}
+
+.stat-pct {
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.stat-pct.color-good {
+  color: #065F46;
+}
+
+.stat-pct.color-warning {
+  color: #92400E;
+}
+
+.stat-pct.color-danger {
+  color: #991B1B;
+}
+
+.stat-row-happiness {
+  border-top: 1px dashed rgba(52, 78, 65, 0.2);
+  padding-top: 0.25rem;
+  margin-top: 0.1rem;
+}
+
+/* ==========================================================================
+   5.4 HARDWARE ACTION CONTROLS (design.md Section 2.3 & 5.4)
+   Tres botones retro convexos y responsivos con sombra sólida:
+   box-shadow: 0 4px 0 #000, transición en :active desplazando translateY(4px)
+   -------------------------------------------------------------------------- */
+.chassis-controls-area {
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+.action-controls-nav {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.action-buttons-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.tactile-hardware-btn {
+  background: linear-gradient(180deg, #F1F5F9 0%, #CBD5E1 60%, #94A3B8 100%);
+  border: 2px solid #334155;
+  border-radius: 18px;
+  padding: 0.75rem 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  /* Solid shadow requirement (design.md Section 2.3) */
+  box-shadow: 0 4px 0 #000000;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.tactile-hardware-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 60%, #CBD5E1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #000000;
+}
+
+.tactile-hardware-btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #000000;
+}
+
+.tactile-hardware-btn:focus-visible {
+  outline: 3px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+.tactile-hardware-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.85);
+  box-shadow: 0 2px 0 #000000;
+}
+
+.btn-convex-cap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.btn-tactile-icon {
+  font-size: 1.4rem;
+}
+
+.btn-tactile-label {
+  font-family: var(--font-pixel);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #1E293B;
+  letter-spacing: 0.5px;
+}
+
+.btn-key-badge {
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Urgent glowing highlight pills */
+.btn-highlight-alert {
+  border-color: var(--color-stat-hunger) !important;
+  animation: button-wiggle-alert 1.2s infinite;
+}
+
+.btn-highlight-clean {
+  border-color: #059669 !important;
+  box-shadow: 0 4px 0 #000000, 0 0 12px rgba(16, 185, 129, 0.7);
+}
+
+@keyframes button-wiggle-alert {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  25% { transform: translateY(-2px) rotate(-2deg); }
+  75% { transform: translateY(-2px) rotate(2deg); }
+}
+
+.btn-urgent-pill {
+  position: absolute;
+  top: -8px;
+  background: var(--color-alert-urgent);
+  color: #FFF;
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 0.12rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid #FFF;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.btn-warning-pill {
+  position: absolute;
+  top: -8px;
+  background: var(--color-stat-happiness);
+  color: #1E1B4B;
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 0.12rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid #FFF;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.controls-paused-hint {
+  background: rgba(0, 0, 0, 0.35);
+  color: #FBBF24;
+  font-family: var(--font-dialogue);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.35rem;
+  border-radius: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ==========================================================================
+   SIDEBAR COMPONENTS (Rules & Activity Log)
+   Neo-brutalist Pixel Toy aesthetic
+   ========================================================================== */
+
+.rules-card-container,
+.activity-log-container {
+  background: var(--bg-card);
+  border: 2px solid var(--bg-card-border);
+  border-radius: 18px;
+  padding: 1.15rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.rules-card-header,
+.activity-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.65rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 0.85rem;
+}
+
+.rules-header-title,
+.log-header-title {
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  color: #F8FAFC;
+  letter-spacing: 0.5px;
+}
+
+.rules-header-badge,
+.log-header-badge {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.rule-box {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
+.rule-danger {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.rule-controls-hint {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.rule-bullet {
+  font-size: 1rem;
+}
+
+.rule-content {
+  font-size: 0.76rem;
+  color: #94A3B8;
+  line-height: 1.4;
+}
+
+.rule-content strong {
+  color: #E2E8F0;
+}
+
+/* Activity Log */
+.activity-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.activity-log-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.activity-log-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.activity-log-list::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.log-entry {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  padding: 0.45rem 0.55rem;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.log-entry-time {
+  font-family: var(--font-dialogue);
+  font-size: 0.65rem;
+  color: #64748B;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.log-entry-msg {
+  color: #CBD5E1;
+}
+
+.log-entry-info {
+  border-left-color: var(--color-stat-fun);
+}
+
+.log-entry-alert {
+  border-left-color: var(--color-stat-happiness);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.log-entry-warning {
+  border-left-color: #EC4899;
+  background: rgba(236, 72, 153, 0.08);
+}
+
+.log-entry-death {
+  border-left-color: var(--color-stat-hunger);
+  background: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+}
+
+.log-entry-success {
+  border-left-color: var(--color-stat-hygiene);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+/* ==========================================================================
+   5.1 SETUP MODAL & 5.6 SUMMARY MODAL (design.md Section 5.1 & 5.6)
+   ========================================================================== */
+
+.setup-modal-overlay,
+.summary-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 16, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.setup-modal-card,
+.summary-modal-card {
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(165deg, #1E293B 0%, #0F172A 100%);
+  border: 3px solid var(--color-shell-primary);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow:
+    0 25px 60px -15px rgba(0, 0, 0, 0.9),
+    0 0 35px rgba(245, 158, 11, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  animation: modal-drop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modal-drop {
+  from { opacity: 0; transform: scale(0.92) translateY(15px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.setup-device-badge,
+.summary-badge {
+  font-family: var(--font-pixel);
+  font-size: 0.65rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  margin-bottom: 0.85rem;
+}
+
+.setup-modal-title,
+.summary-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: #F8FAFC;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.setup-modal-subtitle,
+.summary-description {
+  font-size: 0.82rem;
+  color: #94A3B8;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.setup-rules-preview {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #CBD5E1;
+}
+
+.rule-icon {
+  font-size: 0.9rem;
+}
+
+.setup-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.setup-label {
+  font-family: var(--font-dialogue);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #CBD5E1;
+  text-align: left;
+}
+
+.setup-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.setup-input {
+  width: 100%;
+  background: var(--color-screen-bg);
+  border: 3px solid var(--color-screen-pixel);
+  color: var(--color-screen-pixel);
+  padding: 0.75rem 3rem 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: var(--font-display);
+  letter-spacing: 1px;
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.setup-input:focus {
+  outline: none;
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.25), 0 0 12px rgba(245, 158, 11, 0.5);
+  border-color: #1E293B;
+}
+
+.setup-char-count {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-pixel);
+  font-size: 0.65rem;
+  color: var(--color-screen-pixel);
+  font-weight: 700;
+}
+
+.setup-error-msg {
+  color: var(--color-stat-hunger);
+  font-size: 0.75rem;
+  font-family: var(--font-dialogue);
+  font-weight: 600;
+  text-align: left;
+}
+
+.setup-start-button,
+.summary-restart-btn {
+  width: 100%;
+  background: var(--color-shell-primary);
+  color: #78350F;
+  border: 2px solid #78350F;
+  border-radius: 12px;
+  padding: 0.95rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #000000;
+  transition: all 0.15s ease;
+  margin-top: 0.5rem;
+}
+
+.setup-start-button:hover,
+.summary-restart-btn:hover {
+  background: #FBBF24;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #000000;
+}
+
+.setup-start-button:active,
+.summary-restart-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #000000;
+}
+
+/* --------------------------------------------------------------------------
+   DIPLOMA RETRO REPORT CARD (design.md Section 5.6)
+   Grado final (S, A, B, C, F) + Desglose numérico
+   -------------------------------------------------------------------------- */
+.diploma-card {
+  position: relative;
+}
+
+.card-victory {
+  border-color: var(--color-stat-hygiene);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(16, 185, 129, 0.3);
+}
+
+.card-defeat {
+  border-color: var(--color-stat-hunger);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(239, 68, 68, 0.3);
+}
+
+.diploma-border-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #F59E0B;
+}
+
+.diploma-border-corner.top-left {
+  top: 8px;
+  left: 8px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.diploma-border-corner.top-right {
+  top: 8px;
+  right: 8px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.diploma-border-corner.bottom-left {
+  bottom: 8px;
+  left: 8px;
+  border-right: none;
+  border-top: none;
+}
+
+.diploma-border-corner.bottom-right {
+  bottom: 8px;
+  right: 8px;
+  border-left: none;
+  border-top: none;
+}
+
+.summary-grade-container {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 0.85rem 1.25rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.grade-circle {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1E293B;
+  border: 3px solid #64748B;
+  flex-shrink: 0;
+}
+
+.grade-circle[data-grade="S"] {
+  border-color: #F59E0B;
+  background: linear-gradient(135deg, #78350F 0%, #B45309 100%);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+}
+
+.grade-circle[data-grade="A"] {
+  border-color: #10B981;
+  background: linear-gradient(135deg, #064E3B 0%, #047857 100%);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+}
+
+.grade-circle[data-grade="B"] {
+  border-color: #3B82F6;
+  background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%);
+}
+
+.grade-circle[data-grade="C"] {
+  border-color: #F59E0B;
+  background: #451A03;
+}
+
+.grade-circle[data-grade="F"] {
+  border-color: #EF4444;
+  background: linear-gradient(135deg, #7F1D1D 0%, #991B1B 100%);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+}
+
+.grade-letter {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  color: #FFF;
+  line-height: 1;
+}
+
+.grade-sub {
+  font-family: var(--font-pixel);
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2px;
+}
+
+.grade-details {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 0.25rem;
+}
+
+.grade-title {
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  color: #F8FAFC;
+}
+
+.grade-time {
+  font-family: var(--font-dialogue);
+  font-size: 0.72rem;
+  color: #94A3B8;
+}
+
+.summary-stats-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.summary-stat-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.65rem 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.summary-stat-box.highlight-box {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.summary-stat-icon {
+  font-size: 1rem;
+}
+
+.summary-stat-num {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: #FBBF24;
+}
+
+.summary-stat-label {
+  font-family: var(--font-dialogue);
+  font-size: 0.65rem;
+  color: #94A3B8;
+  font-weight: 600;
+}
