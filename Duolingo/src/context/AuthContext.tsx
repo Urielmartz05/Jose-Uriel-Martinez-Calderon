@@ -45,14 +45,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password }),
       });
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        // Response was not JSON (e.g. 500 error page from server)
+      }
       if (!res.ok) {
-        return { success: false, error: data.error || 'Error al iniciar sesión' };
+        return { success: false, error: data.error || `Error del servidor (${res.status})` };
       }
       setUser(data.user);
       return { success: true };
-    } catch {
-      return { success: false, error: 'Error de conexión con el servidor' };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Error de conexión con el servidor' };
     }
   };
 
@@ -63,14 +68,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password }),
       });
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        // Response was not JSON
+      }
       if (!res.ok) {
-        return { success: false, error: data.error || 'Error al registrarse' };
+        return { success: false, error: data.error || `Error del servidor (${res.status})` };
       }
       setUser(data.user);
       return { success: true };
-    } catch {
-      return { success: false, error: 'Error de conexión con el servidor' };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Error de conexión con el servidor' };
     }
   };
 

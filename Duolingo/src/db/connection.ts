@@ -21,12 +21,16 @@ if (hasPlaceholder) {
 
 const databaseUrl = !hasPlaceholder ? rawDatabaseUrl : undefined;
 
+import pg from 'pg';
+import sqlite3 from 'sqlite3';
+
 let sequelize: Sequelize;
 
 if (databaseUrl) {
   const isPostgres = databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://');
   sequelize = global.__sequelize_instance || new Sequelize(databaseUrl, {
     dialect: isPostgres ? 'postgres' : undefined,
+    dialectModule: isPostgres ? pg : undefined,
     logging: false,
     dialectOptions: isPostgres ? {
       ssl: {
@@ -39,6 +43,7 @@ if (databaseUrl) {
   const sqliteStorage = path.resolve(process.cwd(), 'database.sqlite');
   const options: Options = {
     dialect: 'sqlite',
+    dialectModule: sqlite3,
     storage: sqliteStorage,
     logging: false,
   };
